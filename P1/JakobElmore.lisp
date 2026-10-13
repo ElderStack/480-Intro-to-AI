@@ -1,53 +1,3 @@
-;;;;; K-NEAREST-NEIGHBOR
-
-;;;;; This is a very short assignment and its intent is to get your feet wet in Lisp.
-;;;;; Your task is to write three functions which will enable you to test K-Nearest Neighbor:a
-;;;;;
-;;;;; 1. DIFFERENCE.  This function tells you the difference (error) between two lists.
-;;;;;    You will use three kinds of measurement for error: COUNT, SQUARED, and MANHATTAN.
-;;;;;    Though the default will be COUNT, you will probably be most familiar with SQUARED
-;;;;;    since it basically does what the lecture notes showed.
-;;;;;
-;;;;; 2. K-NEAREST-NEIGHBOR.  This function will take a list of examples, and their associated
-;;;;;    classes, and return what class they predict for an additional unseen example, based on
-;;;;;    the classes of the K examples whose DIFFERENCE from the unseen example is lowest.
-;;;;;
-;;;;; 3. GENERALIZATION.  This function will take two lists of examples, a training set and a
-;;;;;    testing set, and return the percentage of testing set examples which were correctly
-;;;;;    predicted by K-Nearest-Neighbor using the original training set examples.
-;;;;;
-;;;;; You must do the following:
-;;;;;
-;;;;; 1. Write the three functions correctly.
-;;;;; 2. Test them on the two EXAMPLES below.  Determine the correct values.
-;;;;; 3. Modify this file into properly-commented and properly compiling lisp code,
-;;;;;    which has at the end of it, in comments, the answers to the two EXAMPLES questions,
-;;;;;    PLUS an at least 500-word report detailing how you went about implementing this code
-;;;;;    and what you learned along the way.
-;;;;; 4. We may ask optionally you additional questions about your project, and
-;;;;;    these questions may impact on your grade.
-;;;;;
-;;;;; You should submit this file as a single LISP file named FooBar.lisp, where Foo is your
-;;;;; first name and Bar is your last name (for example, my file would be named SeanLuke.lisp).
-;;;;;
-;;;;; This file will be mailed to your TA as an ATTACHMENT in 
-;;;;; an email message.  Do not send your code as email text: it must
-;;;;; be an attachment.  Do not include any other text or attachments 
-;;;;; with the message: just the file. The email message must have 
-;;;;; the subject line:
-;;;;;
-;;;;; CS 480 Project 1
-;;;;;
-;;;;; You should verify your code on 'lisp' on mason.gmu.edu.  Here's how it works.  If the TA
-;;;;; cannot get your code running on their laptops, and have reduced your score because of it,
-;;;;; you have the right to challenge this if you believe that the program works on mason.gmu.edu.
-;;;;; If it does, you're fine.   Don't develop on mason.gmu.edu, that's painful. Just verify the
-;;;;; final result on it before submission.
-;;;;;
-;;;;; Please do not deviate from the function signatures and data format provided.  Though you may
-;;;;; have a more clever way of doing things (such as using arrays rather than lists) all you are
-;;;;; really doing is making life far harder for the TA to grade.  Thus deviation of any kind,
-;;;;; even notional improvements, will considered a CODE ERROR.
 
 
 (defun difference (list1 list2 &key (measure 'count))
@@ -64,38 +14,6 @@
 2. Measure type MANHATTAN: the sum absolute difference (abs (- a b)) between items
     in list1 and list2.  Obviously the items must be numbers of some sort.
     Example usage:   (difference '(1 2 3) '(1 3 7) :measure 'manhattan)  -> 5"
-
-    ;;; HINTS: use equalp to test for the given type, and for equality in COUNT
-    ;;; HINTS: ABS is absolute value
-    ;;; HINTS: I used MAPCAR and LAMBDA to make things easy. You might look them up.
-    ;;; HINTS: This is a place where INCF would be reasonable.
-    ;;; HINTS: My code is about 14 (short) lines long
-
-
-    ;;;;IMPLEMENT ME
-    #|(if (equalp measure 'count)
-        (let ((x 0))
-            (loop for i from 0 below (length list1) ;for (i = 0; i < len(list1); i ++)
-                do (if (not (equalp (elt list1 i) (elt list2 i))) (incf x)); if list1[i] != list2[i] then x++
-            )
-        x)
-    )
-
-    (if (equalp measure 'manhattan)
-        (let ((x 0))
-            (loop for i from 0 below (length list1)
-                do (incf x (abs (- (elt list1 i) (elt list2 i))))
-            )
-        x)
-    )
-
-    (if (equalp measure 'squared)
-        (let ((x 0))
-            (loop for i from 0 below (length list1)
-                do (incf x (expt (- (elt list1 i) (elt list2 i)) 2))
-            )
-        x)
-    ) I was getting some weird nil so I switched to cond|#
 
     (cond ;switch statement basically
         ((equalp measure 'count)
@@ -137,7 +55,6 @@ the value in x is returned by the function.
 
 ;(print (difference list-1 list-2 :measure 'squared))
 
-;;; I am providing this function for you as an example
 (defun most-common (list)
     "Returns the most common item in list, breaking ties arbitrarily"
     (let ((reduced-elts (mapcar (lambda (elt) (list elt (count elt list :test #'equalp)))
@@ -150,11 +67,6 @@ the value in x is returned by the function.
     of the same form, determines the K EXAMPLES which most closely resemble the NEW-EXAMPLE,
     then returns the most common class among them.  The MEASURE used to compute similarity
     can be provided.  Note that the CLASS is a LIST, like (0.9), not 0.9."
-
-    ;;; HINTS: use MOST-COMMON to select the most common among N classes.
-    ;;; HINTS: you might use SORT and SUBSEQ
-    ;;; HINTS: I used MAPCAR and LAMBDA to make things easy. You might look them up.
-    ;;; HINTS: My code is about 11 lines long
 
     ;;;; IMPLEMENT ME
     (let* ((neighbor-pair (mapcar ;builds a pair when given the two lists; the distance and the class
@@ -181,20 +93,11 @@ returned as the class of new-example.
 |#
 
 
-
-
 (defun generalization (training-examples test-examples &key (k 1) (measure 'count))
     "Given a list of TRAINING EXAMPLES, each of the form (list-of-data class),
     and a set of TEST EXAMPLES, each of the same form, returns the percentage of TEST
     EXAMPLES correctly classified when passed to K-NEAREST-NEIGHBOR with the TRAINING
     EXAMPLES.  Note that the CLASS is a LIST, like (0.9), not 0.9."
-
-    ;;; HINTS: use EQUALP to compare classes
-    ;;; HINTS: This is a place where INCF would be reasonable.
-    ;;; HINTS: I used DOLIST
-    ;;; HINTS: My code is about 5 lines long
-
-    ;;;; IMPLEMENT ME
 
     (let ((num-correct 0)) ;counter
         (dolist (test test-examples)  ;loop through tests
@@ -214,24 +117,7 @@ and it is returned, usually as a fraction.
 |#
 
 
-
-
-;;;;; SOME EXAMPLES
-;;;;;
-;;;;; Find out what *VOTING-RECORDS-SHORT* would predict about the *NEUTRAL* congressman using 3-Nearest Neighbor
-;;;;; and sum-squared error distance.
-;;;;;
-;;;;; (k-nearest-neighbor *voting-records-short* *neutral* :k 3 :measure 'squared)
-;;;;; ANSWER: (0.9)
-;;;;;
-;;;;; Find out how well the first 200 voting records predict the last 94 voting records using 3-Nearest Neighbor
-;;;;; and sum-squared error distance.
-;;;;;
-;;;;; (generalization (butlast *voting-records-short* 94) (last *voting-records-short* 94) :measure 'squared :k 3)
-;;;;; ANSWER: 4350/47
-;;;;;
-;;;;; WHAT ARE THE CORRECT ANSWERS TO THESE TWO EXAMPLES?
-
+;;data stored below
 
 (defparameter *neutral*
     '((0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5) (0.1)))  ;; is this the right class?
