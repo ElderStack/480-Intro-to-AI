@@ -1,3 +1,7 @@
+;;;; Jakob Elmore G01302977
+;;;; I included my function reports underneath each function I wrote. I additionally answered all the questions left in comments
+;;;; at the bottom of the file. If needed I can compile those into a seperate text document, but its easier to read when integrated
+;;;; with the code.
 #|
 PROJECT 2
 
@@ -15,7 +19,6 @@ I have two versions of this code: one using arrays and one using
 lists.  I've decided to provide you with the the list version of
 the code rather than the array version.  The array version is
 harder to write but also harder to introduce bugs.
-
 
 Be certain to see the questions at the end of the file.  
 
@@ -369,6 +372,12 @@ pretty efficient.  Returns the shuffled version of the list."
     (/ 1 (+ 1 (exp (- u))))
 )
 ;(print (sigmoid 2.5))
+#|
+Function Report:
+Pretty simple implementation of the sigmoid function. 
+Exp is not an exponent function, but is e^u, which was convienent for this. I had started to define a 
+constant for e before I googled how to do exponents in lisp.
+|#
 
 ;; output and correct-output are both column-vectors
 
@@ -387,6 +396,11 @@ pretty efficient.  Returns the shuffled version of the list."
         1 1)
     )
 )
+#|
+Function Report:
+Similarly, not too hard since its just the implementation of the equation provided. It was good to test the matrix
+functions, and besides forgetting that the matrix starts at 1 instead of 0, but I had no difficulties here.
+|#
 
 
 ;; a single datum is of the form
@@ -406,6 +420,12 @@ the datum as input."
        (o (map-m #'sigmoid (multiply w h))))
   o)
 )
+#| 
+Function Report:
+I attempted to use mapcar for this initially, but I was getting errors where it was handing a list to sigmoid, which only accepts
+a number. A quick google search later and I switched to map-m and passed sigmoid as a function pointer. After that the rest was
+trivial, just implementing the equations provided.
+|#
 
 
 ;; IMPLEMENT THIS FUNCTION
@@ -425,10 +445,11 @@ returning a list consisting of new, modified V and W matrices."
   ;; let* is like let, except that it lets you initialize local
   ;; variables in the context of earlier local variables in the
   ;; same let* statement.
-  (let* ((i (first datum))
-        (c (second datum))
-        (h (map-m #'sigmoid (multiply v i)))
-        (o (map-m #'sigmoid (multiply w h)))
+  (let* 
+    ((i (first datum))
+    (c (second datum))
+    (h (map-m #'sigmoid (multiply v i)))
+    (o (map-m #'sigmoid (multiply w h)))
     (odelta (e-multiply (subtract c o) o (subtract-from-scalar 1 o)))
     (hdelta (e-multiply h (subtract-from-scalar 1 h) (multiply (transpose w) odelta)))
     (new-w (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
@@ -436,6 +457,12 @@ returning a list consisting of new, modified V and W matrices."
     (list new-v new-w)
   )
 )
+#|
+Function Report:
+Since this was similar to forward-propagation, I was able to figure it out pretty quickly. The biggest issue here was knowing when
+to use e-multiply vs multiply. Since its also a bit longer, I created variables that matched the given equations to make it easier to read.
+Otherwise, its just implementing the given equations, similar to the other functions so far.
+|#
 
 
 (defun optionally-print (x option)
@@ -463,16 +490,16 @@ In any case, returns x"
 ;;; IMPLEMENT THIS FUNCTION
 
 (defun net-build (data num-hidden-units alpha initial-bounds max-iterations modulo &optional print-all-errors)
-  "Builds a neural network with num-hidden-units and the appropriate number
+"Builds a neural network with num-hidden-units and the appropriate number
 of input and output units based on the data.  Each element should be a random
 value between -(INITIAL-BOUNDS) and +(INITIAL-BOUNDS).
 
 Then performs the following loop MAX-ITERATIONS times, or until the error condition
 is met (see below):
 
-   1. For each data element in a randomized version of the data, perform
+    1. For each data element in a randomized version of the data, perform
       backpropagation.
-   2. Every modulo iterations,
+    2. Every modulo iterations,
           For every data element in the data, perform forward propagation and
           A.  If print-all-errors is true, then print the error for each element
           B.  At any rate, always print the worst error and the mean error
@@ -482,14 +509,57 @@ is met (see below):
 
 The function should return a list of two items: the final V matrix
 and the final W matrix of the learned network."
-  (let* ((nn ))
-    (dotimes (iteration max-iterations)
-      
+  ;create v and w
+  (let* 
+    ((v (make-random-matrix num-hidden-units (length (first (first data))) initial-bounds))
+    (w (make-random-matrix (length (second (first data))) num-hidden-units initial-bounds)))
+
+    ;training
+    (dotimes (n max-iterations)
+      (dolist (datum (shuffle data))
+        (let ((result (back-propagate datum alpha v w)))
+          (setf v (first result))
+          (setf w (second result))
+        )
+      )
+
+      ;modulo checks
+      (when (zerop (mod (+ 1 n) modulo)) ;when stops some nils from appearing when using if
+        ;(print "modulo ")
+        ;(write n)
+        (let ((errors ;puts all errors into a list
+          (mapcar 
+            (lambda (datum) 
+              (net-error (forward-propagate datum v w) (second datum))
+            ) 
+          data)))
+          
+          (if print-all-errors
+            (dolist (err errors) 
+              (print err)
+            )
+          )
+          (let ((worst (print (reduce #'max errors))))
+            (print (average errors))
+            (if ( < worst *a-good-minimum-error*) 
+              (return)
+            )
+          )
+        )
+      )
     )
+    ;return v and w
+    (list v w)
   )
 )
-
-
+#| 
+Function Report:
+The first step is to create a two random matrices v and w, which are used in our propagation functions we made earlier. Since
+there are provided functions that create random matrices, this was trivial. Training was less complicated then expected, since 
+its just the result of the backpropagation on the shuffled data. Afterwards was implementing the required actions for when the modulo
+hit. Besides having to look back at my previous project for examples of mapcar and lambda to calculate and store the errors,
+this wasn't too bad. Just a few if statements to check if all errors need to be printed or to exit the function.
+|#
 
 ;; For this function, you should pass in the data just like it's defined
 ;; in the example problems below (that is, not in the "column vector" format
@@ -506,7 +576,25 @@ and the final W matrix of the learned network."
 of the data, then tests generalization on the second half, returning
 the average error among the samples in the second half.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
-  )
+  (let* (
+      ;creates a neural network from the first half of the data
+      (nn (net-build (subseq (convert-data data) 0 (floor (length data) 2)) num-hidden-units alpha initial-bounds max-iterations max-iterations))
+      (errors ;makes a list of errors from the second half of the data
+        (mapcar 
+          (lambda (datum)
+            (net-error(forward-propagate datum (first nn) (second nn)) (second datum))
+          )
+        (subseq (convert-data data) (floor (length data) 2 )))
+      )
+    )
+  (average errors))
+)
+#|
+Function Report:
+This function just calls the last function, but on a subsection of the data we give it. I was initally using / to divide,
+but I was getting fractions on any odd numbered length data sets, so I switched to floor. After using a similar mapcar lambda
+structure from last function to get a list of all the errors from the neural network, it returns the average of those errors
+|#
 
 
 
@@ -1670,30 +1758,89 @@ can be fed into NET-LEARN.  Also adds a bias unit of 0.5 to the input."
     ))
 
 
-
-
-
 #|
+
 ;;; some test code for you to try
 
 ;;; you'll need to run this a couple of times before it globally converges.
 ;;; When it *doesn't* converge what is usually happening?
+Both of these converge and quick since they raech the error threshhold.
 (net-build (convert-data *nand*) 3 1.0 5 20000 1000 t)
-
 (net-build (convert-data *xor*) 3 1.0 5 20000 1000 t)
 
 
 ;; how well does this converge on average?  Can you modify it to do better?
+Since the training set for this is large, it doesn't converge like the previous two. The error still falls between
+e-4 and e-7 more or less, so its still very accurate, but it isn't hitting that e-9 error threshold.
 (net-build (convert-data *voting-records*) 10 1.0 2 5000 250 t)
+
+I tried (net-build (convert-data *voting-records*) 20 0.5 2 5000 250 t) and I saw some e-8, but that could've just been random chance.
 
 
 ;;; how well does this generalize usually?  Can you modify it to typically generalize better?
 (simple-generalization *voting-records* ...)  ;; pick appropriate values
 
+It appears to generalized well. All error values are rather low.
+(print (simple-generalization *voting-records* 10 1.0 2 5000))
+6.3811465e-5 ;worst
+4.332796e-6 ;mean
+0.016054766 ;average
+
+It seems that increasing the number of hidden elements and reducing the alpha had an overall negative effect on the network.
+(print (simple-generalization *voting-records* 20 0.25 2 5000))
+0.0042369156 
+5.672088e-5 
+0.02241643 
+
+Lowering the initial range also seemed to make the network overall worse. It seems my first attempt was pretty good.
+(print (simple-generalization *voting-records* 10 1.0 1 5000))
+1.3081005e-4 
+1.0081305e-5 
+0.021445543 
+
+(print (simple-generalization (scale-data *mpg*) 20 1.0 2 5000))
+
 ;;; how well does this generalize usually?  Can you modify it to typically generalize better?
 (simple-generalization *mpg* ...) ;; pick appropriate values
 
+It generalized decently, but not as well as the voting records.
+(print (simple-generalization (scale-data *mpg*) 20 1.0 2 5000))
+0.006254144 
+5.369989e-4 
+0.004749205 
+
+Adjusting the initial range had pretty negligible results.
+(print (simple-generalization (scale-data *mpg*) 20 1.0 1 5000))
+0.0058250283 
+5.3982483e-4 
+0.006379451 
+
+Adjusting the alpha had pretty significantly effect in lowering the worst error, but made the average really bad
+(print (simple-generalization (scale-data *mpg*) 20 1.0 2 5000))
+4.3709626e-4 
+5.6777062e-5 
+0.32583502 
+
 ;;; how well does this generalize usually?  Can you modify it to typically generalize better?
 (simple-generalization *wine* ...)  ;; pick appropriate values
+
+Wine seems to converge the worst compared to the other two. Its average is really high, and the worst and mean are both highest 
+its been so far.
+(print (simple-generalization (scale-data *wine*) 10 1.0 2 5000))
+0.009144387 
+3.5177523e-4 
+0.30751827 
+
+Increasing the amount of hidden units helped both the worst and mean error values, but made the average worse.
+(print (simple-generalization (scale-data *wine*) 20 1.0 2 5000))
+4.3709626e-4 
+5.6777062e-5 
+0.32583502 
+
+Lowering the initial range had minimal impact on the error rates.
+(print (simple-generalization (scale-data *wine*) 20 1.0 1 5000))
+7.512735e-4 
+9.1673384e-5 
+0.31976277 
 
 |#
